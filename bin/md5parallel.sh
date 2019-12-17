@@ -67,10 +67,10 @@ while getopts 'w:n:o:rgh' flag; do
                                    ;;
                 n) NJOBS="${OPTARG}"
                                re_isanum='^[+]*[[:digit:]]*$' #re_isanum='^[0-9]+$' # Regex: match whole numbers only
-                               if ! [[ $CORE =~ $re_isanum ]] ; then   # if $CORE not a whole number:
+                               if ! [[ $NJOBS =~ $re_isanum ]] ; then   # if $CORE not a whole number:
                                 echo "ERROR: NJOBS [-n] must be a positive, whole number."
                                 exit_abnormal
-                               elif [ $CORE -eq "0" ]; then            # If it's zero:
+                               elif [ $NJOBS -eq "0" ]; then            # If it's zero:
                                 echo "ERROR: NJOBS [-n] must be bigger than zero."
                                 exit_abnormal
                                fi
@@ -104,7 +104,7 @@ echo "------------------------"
 find $WD -type f | parallel -j $NJOBS md5sum > $OUTFILE
 wait
 if [ "$RMWD" == TRUE ]; then 
-	cat $OUTFILE | awk -v SUB=$WD '{gsub(SUB,"",$2); print}' > ${OUTFILE}.tmp
+	cat $OUTFILE | awk -v SUB=$WD '{gsub(SUB,"./",$2); print}' > ${OUTFILE}.tmp
         mv ${OUTFILE}.tmp $OUTFILE
 fi
 
