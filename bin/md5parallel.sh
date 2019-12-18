@@ -103,8 +103,13 @@ echo "------------------------"
 
 find $WD -type f | parallel -j $NJOBS md5sum > $OUTFILE
 wait
-if [ "$RMWD" == TRUE ]; then 
-	cat $OUTFILE | awk -v SUB=$WD '{gsub(SUB,"./",$2); print}' > ${OUTFILE}.tmp
+if [ "$RMWD" == TRUE ]; then
+	if [ ${WD: -1} == "/" ]; then
+		cat $OUTFILE | awk -v SUB=$WD '{gsub(SUB,"./",$2); print}' > ${OUTFILE}.tmp
+	else 
+		cat $OUTFILE | awk -v SUB=$WD '{gsub(SUB,".",$2); print}' > ${OUTFILE}.tmp
+	fi
+
         mv ${OUTFILE}.tmp $OUTFILE
 fi
 
