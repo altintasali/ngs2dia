@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-#!/usr/bin/env bash
 
 ############################################################################################################################
 # Usage for the script
@@ -10,6 +9,8 @@ USAGE="Usage: `basename $0` [FLAGS]
 \t [-o <output_file>]                      Output filename [default=./md5.txt]
 \t [-g <gzip_file>]                        Flag to gzip the output file
 \t [-r <remove_working_directory_prefix]   Flag for removing the working directory prefix in MD5SUM output file
+\t [-c <md5sum_check_file>]		   Activates md5sum check (md5sum -c [FILENAME] when MD5SUM output file provided)
+					   An outfile file with CHECKSUM status. File extension will be '.check' [default=./md5.txt.check]
 "
 
 exit_abnormal() {       # Function: Exit with error.
@@ -46,16 +47,16 @@ linkread(){     # Function: preserve readlink behaviour for MacOS as well
 ############################################################################################################################
 # Assign default parameters for the flags
 ############################################################################################################################
-WD=.                      # Working Directory
+WD=.                             # Working Directory
 NJOBS=1                          # FASTQ Directory
-OUTFILE=./md5.txt                  # Sequencing type: Paired-end or Single-end
-
+OUTFILE=./md5.txt                # Sequencing type: Paired-end or Single-end
+#CHECKFILE=./md5.check              # Sequencing type: Paired-end or Single-end
 #unset OUTFILE
 
 ############################################################################################################################
 # getopts
 ############################################################################################################################
-while getopts 'w:n:o:rgh' flag; do
+while getopts 'w:n:o:rghc:' flag; do
         case "${flag}" in
                 w) WD=${OPTARG}
                                    if [[ -d $WD ]]; then
@@ -78,6 +79,7 @@ while getopts 'w:n:o:rgh' flag; do
                 o) OUTFILE=${OPTARG} ;;
 		r) RMWD=TRUE ;; 
 		g) GZFILE=TRUE ;;
+                c) CHECKFILE=${OPTARG} ;;
                 h | *) printf "$USAGE" 1>&2 ; exit 1 ;;
 	esac
 done
@@ -91,9 +93,15 @@ echo "Input parameters"
 echo "------------------------"
 echo "[-w]      WD            : $WD"
 echo "[-n]      NJOBS         : $NJOBS"
-echo "[-o]      OUTFILE       : $OUTFILE"
 echo "[-g]      GZFILE        : $GZFILE"
+
+if [ ! -z "${CHECKFILE}" ];then
+echo "[-c]      CHECKFILE     : $CHECKFILE"
+else
+echo "[-o]      OUTFILE       : $OUTFILE"
 echo "[-r]      RMWD          : $RMWD"
+fi
+
 echo "------------------------"
 
 ############################################################################################################################
@@ -101,18 +109,27 @@ echo "------------------------"
 ############################################################################################################################
 #find $WD/ -type f -printf '%P\n' | parallel -j $NJOBS md5sum > $OUTFILE
 
-find $WD -type f | parallel -j $NJOBS md5sum > $OUTFILE
-wait
-if [ "$RMWD" == TRUE ]; then
-	if [ ${WD: -1} == "/" ]; then
-		cat $OUTFILE | awk -v SUB=$WD '{gsub(SUB,"./",$2); print}' > ${OUTFILE}.tmp
-	else 
-		cat $OUTFILE | awk -v SUB=$WD '{gsub(SUB,".",$2); print}' > ${OUTFILE}.tmp
+
+if [ ! -z "${CHECKFILE}" ]; then
+	CHECKFILEOUT=$CHECKFILE.check
+	cat $CHECKFILE | parallel --pipe -j $NJOBS md5sum -c > $CHECKFILEOUT
+	
+else
+
+	find $WD -type f | parallel -j $NJOBS md5sum > $OUTFILE
+	wait
+	if [ "$RMWD" == TRUE ]; then
+		if [ ${WD: -1} == "/" ]; then
+			cat $OUTFILE | awk -v SUB=$WD '{gsub(SUB,"./",$2); print}' > ${OUTFILE}.tmp
+		else 
+			cat $OUTFILE | awk -v SUB=$WD '{gsub(SUB,".",$2); print}' > ${OUTFILE}.tmp
+		fi
+
+	        mv ${OUTFILE}.tmp $OUTFILE
 	fi
 
-        mv ${OUTFILE}.tmp $OUTFILE
-fi
+	if [ "$GZFILE" == TRUE ]; then
+        	gzip $OUTFILE 
+	fi
 
-if [ "$GZFILE" == TRUE ]; then
-        gzip $OUTFILE 
 fi
