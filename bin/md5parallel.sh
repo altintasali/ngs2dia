@@ -104,13 +104,17 @@ echo "------------------------"
 find $WD -type f | parallel -j $NJOBS md5sum > $OUTFILE
 wait
 if [ "$RMWD" == TRUE ]; then
-	if [ ${WD: -1} == "/" ]; then
+	# when the $WD is "." or "./"
+	if [ ${WD} == "." ] || [ ${WD} == "./" ]; then
+		:
+	# The rest is handled by case as below
+	elif [ ${WD: -1} == "/" ]; then
 		cat $OUTFILE | awk -v SUB=$WD '{gsub(SUB,"./",$2); print}' > ${OUTFILE}.tmp
+		mv ${OUTFILE}.tmp $OUTFILE
 	else 
 		cat $OUTFILE | awk -v SUB=$WD '{gsub(SUB,".",$2); print}' > ${OUTFILE}.tmp
+  		mv ${OUTFILE}.tmp $OUTFILE
 	fi
-
-        mv ${OUTFILE}.tmp $OUTFILE
 fi
 
 if [ "$GZFILE" == TRUE ]; then
