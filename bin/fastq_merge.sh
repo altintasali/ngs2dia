@@ -1,4 +1,4 @@
-#!//usr/bin/env bash
+#!/usr/bin/env bash
 
 ###################################################################################################
 # Assign default parameters for the flags
