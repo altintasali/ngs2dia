@@ -140,4 +140,26 @@ Usage:
 # Output: myfile.txt
 ```
 
+## gtf2ensembl.sh
 
+Create ENSEMBL IDs from GTF file. Output columns: gene, transcript, exon, gene name
+
+```
+Usage:
+	 gtf2ensembl.sh [FLAGS]
+
+Description:
+	 Create ENSEMBL IDs from GTF file. Output columns: gene, transcript, exon, gene name
+
+Examples:
+	 gtf2ensembl.sh -i myfile.gtf -o myfile.txt
+
+Flags:
+	 [-i <input_file>]                       Input gtf file. Can be gzipped (.gtf.gz)
+	 [-o <output_file>]                      Output file, tab-delimitted
+	 [-g <gzip_file>]                        Flag to gzip the output file
+	 [-h <help>]                             Print help
+
+Dependencies:
+	 bedops --> convert2bed
+```
